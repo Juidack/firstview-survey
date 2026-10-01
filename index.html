@@ -9,13 +9,13 @@
 html,body{margin:0;width:100%;height:100%;background:#fff;color:#111;font-family:system-ui,-apple-system,"Noto Sans JP","Yu Gothic",sans-serif}
 body{overflow:hidden}
 button{font:inherit}
-.app{width:100%;height:100%;height:100dvh;min-height:520px;display:grid;grid-template-rows:42px 1fr;overflow:hidden}
+.app{width:100%;height:100dvh;min-height:520px;display:grid;grid-template-rows:42px 1fr;overflow:hidden}
 .header{display:flex;align-items:center;justify-content:flex-end;padding:0 18px}
 .progress{font-size:14px;color:#666}
 .screen{position:relative;min-width:0;min-height:0;overflow:hidden;display:grid;place-items:center;padding:12px}
 .card{width:min(760px,94vw);max-height:calc(100dvh - 66px);overflow:auto;border:1px solid #ddd;border-radius:14px;padding:32px;background:#fff;box-shadow:0 5px 24px rgba(0,0,0,.06)}
 h1{font-size:28px;line-height:1.4;margin:0 0 18px}
-h2{font-size:22px;line-height:1.4;margin:0 0 14px}
+h2{font-size:22px;line-height:1.5;margin:0 0 14px}
 p{line-height:1.8;margin:8px 0}
 .note,.small{font-size:14px;color:#666}
 .start,.next{border:0;border-radius:8px;background:#111;color:#fff;cursor:pointer}
@@ -29,51 +29,49 @@ p{line-height:1.8;margin:8px 0}
 .error{color:#b00020;background:#fff1f2;border:1px solid #f0b8bf;padding:12px;border-radius:8px;margin-top:12px}
 .loading{display:grid;place-items:center;color:#666;font-size:15px}
 
-/* 回答画面 */
+/* 回答画面：画像を大きくしすぎず、縦横比を保持して全体を表示 */
 .survey-page{position:relative;width:100%;height:100%;min-width:0;min-height:0}
 .visual-wrap{
   position:absolute;inset:0;
-  padding:10px 10px 148px;
+  padding:18px 24px 178px;
   display:grid;place-items:center;
   overflow:hidden;
 }
 .stimulus{
-  display:block;
-  width:auto;height:auto;
-  max-width:100%;max-height:100%;
+  display:block;width:auto;height:auto;
+  max-width:min(1200px,calc(100vw - 48px));
+  max-height:calc(100dvh - 250px);
   object-fit:contain;object-position:center;
   user-select:none;-webkit-user-drag:none;
 }
 .image-loading{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.92);
-  color:#666;font-size:14px;pointer-events:none;
+  color:#666;font-size:14px;pointer-events:none
 }
 .footer{
-  position:fixed;left:0;right:0;bottom:0;z-index:50;
-  width:100%;
+  position:fixed;left:0;right:0;bottom:0;z-index:50;width:100%;
   padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-  background:rgba(255,255,255,.97);
-  border-top:1px solid #e5e5e5;
+  background:rgba(255,255,255,.98);border-top:1px solid #e5e5e5
 }
-.controls{
-  width:min(920px,100%);
-  margin:0 auto;
-}
+.controls{width:min(920px,100%);margin:0 auto}
 .question{text-align:center;font-size:20px;font-weight:600;margin:0 0 9px}
 .scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .scale-btn{min-width:0;padding:10px 5px;font-size:14px}
+.scale-btn:disabled{cursor:not-allowed;opacity:.55}
+.next-survey{width:100%;margin-top:9px;padding:10px}
 .submit-state{text-align:center;font-size:14px;color:#666;padding:10px}
 @media(max-width:700px){
   .app{grid-template-rows:36px 1fr}
   .header{padding:0 10px}
   .card{padding:24px;max-height:calc(100dvh - 48px)}
-  .visual-wrap{padding-bottom:240px}
+  .visual-wrap{padding:12px 10px 270px}
+  .stimulus{max-width:calc(100vw - 20px);max-height:calc(100dvh - 300px)}
   .footer{padding:7px 8px calc(7px + env(safe-area-inset-bottom))}
   .question{font-size:18px;margin-bottom:6px}
   .scale{grid-template-columns:1fr;gap:5px}
   .scale-btn{padding:8px 5px}
-  .next{margin-top:7px;padding:10px}
+  .next-survey{margin-top:7px;padding:9px}
 }
 </style>
 </head>
@@ -86,11 +84,6 @@ p{line-height:1.8;margin:8px 0}
 <script>
 'use strict';
 
-/*
-  画像はApps Script/Driveを経由させず、静的ホスティングから直接配信します。
-  ここだけ、画像を置いたURLに変更してください。
-  例: https://YOUR-ID.github.io/firstview-images
-*/
 const IMAGE_BASE_URL = './images';
 const GAS_ENDPOINT = 'https://script.google.com/a/macros/ss.p.u-tokyo.ac.jp/s/AKfycbxqVtEFZyrG-FJaHarc8O1_5Oxwq9lGU5IWk_qze-puXXTVgSfwByrBdJ1SQQ1O3cOI/exec';
 
@@ -113,44 +106,33 @@ const PAGES = [
 ];
 
 const GROUPS = [
-  {title:'企業のWebサイト',text:'ある企業について知るために、その企業のWebサイトを見ている場面を想像してください。'},
-  {title:'用語・概念を調べるページ',text:'ある言葉や概念について意味を調べるために、Webページを見ている場面を想像してください。'},
-  {title:'方法・対処法を調べるページ',text:'あることの方法や対処法を調べるために、Webページを見ている場面を想像してください。'}
+  {title:'企業のWebサイト',range:'1〜5',text:'ある企業について知るために、その企業のWebサイトを見ている場面を想像してください。'},
+  {title:'用語・概念を調べるページ',range:'6〜10',text:'ある言葉や概念について意味を調べるために、Webページを見ている場面を想像してください。'},
+  {title:'方法・対処法を調べるページ',range:'11〜15',text:'あることの方法や対処法を調べるために、Webページを見ている場面を想像してください。'}
 ];
 
-const state = {
-  grade:'',
-  answers:Array(15).fill(''),
-  page:0,
-  started:false,
-  responseId:makeId(),
-  submitting:false,
-  imageCache:new Map()
-};
+const state={grade:'',answers:Array(15).fill(''),page:0,responseId:makeId(),submitting:false,imageCache:new Map()};
 
 function makeId(){
-  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
   return 'r-'+Date.now()+'-'+Math.random().toString(36).slice(2);
 }
-function imageUrl(file){
-  return IMAGE_BASE_URL.replace(/\/+$/,'')+'/'+encodeURIComponent(file);
-}
-function setProgress(text){document.getElementById('progress').textContent=text}
+function imageUrl(file){return IMAGE_BASE_URL.replace(/\/+$/,'')+'/'+encodeURIComponent(file)}
+function setProgress(text){document.getElementById('progress').textContent=text||''}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function showError(message){
-  document.getElementById('screen').innerHTML =
-    '<div class="card"><h2>エラーが発生しました</h2><p class="error">'+escapeHtml(message)+'</p><p class="note">ページを再読み込みして、もう一度お試しください。</p></div>';
-}
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  document.getElementById('screen').innerHTML='<section class="card"><h2>エラーが発生しました</h2><p class="error">'+escapeHtml(message)+'</p><p class="note">ページを再読み込みして、もう一度お試しください。</p></section>';
 }
 
 function renderStart(){
   setProgress('');
-  document.getElementById('screen').innerHTML =
+  document.getElementById('screen').innerHTML=
     '<section class="card">'+
       '<h1>Webページ・ファーストビュー調査</h1>'+
-      '<p>このアンケートでは、Webページの最初に表示される部分を見て、「このページをさらに見たいと思うか」を回答していただきます。</p>'+
-      '<p class="note">回答時間の目安：3〜5分程度</p>'+
+      '<p>このアンケートでは、Webページを最初に見たときに、そのページをさらに見たいと思うかについて回答していただきます。</p>'+
+      '<p>回答は卒業研究の分析に使用します。回答は匿名で記録され、氏名・メールアドレス・学籍番号など、個人を特定する情報は収集しません。回答は任意です。</p>'+
+      '<p>アンケート中は、実際にWebページを見るときに近い状態で回答していただくため、全画面表示を使用します。</p>'+
+      '<p class="note">全画面表示はブラウザの仕様により、開始ボタンを押した後に開始されます。Escキーなどで解除された場合は、そのまま回答を続けてください。</p>'+
       '<button class="start" type="button" id="startBtn">調査を始める</button>'+
     '</section>';
   document.getElementById('startBtn').addEventListener('click',renderGrade);
@@ -158,12 +140,10 @@ function renderStart(){
 
 function renderGrade(){
   setProgress('');
-  const buttons = Array.from({length:6},(_,i)=>
-    '<button type="button" class="grade-btn" data-grade="'+(i+1)+'">'+(i+1)+'年</button>'
-  ).join('');
-  document.getElementById('screen').innerHTML =
+  const buttons=Array.from({length:6},(_,i)=>'<button type="button" class="grade-btn" data-grade="'+(i+1)+'">'+(i+1)+'年生</button>').join('');
+  document.getElementById('screen').innerHTML=
     '<section class="card">'+
-      '<h2>学年を選択してください</h2>'+
+      '<h2>あなたの学年を教えてください。</h2>'+
       '<div class="grade-grid">'+buttons+'</div>'+
       '<button type="button" class="next" id="gradeNext" disabled>次へ</button>'+
     '</section>';
@@ -176,16 +156,30 @@ function renderGrade(){
     });
   });
   document.getElementById('gradeNext').addEventListener('click',()=>{
-    if(state.grade) renderPage(0);
+    if(state.grade) renderGroup(0);
   });
 }
 
+function renderGroup(g){
+  const group=GROUPS[g];
+  setProgress('');
+  document.getElementById('screen').innerHTML=
+    '<section class="card">'+
+      '<h2>'+escapeHtml(group.title)+'</h2>'+
+      '<p>'+escapeHtml(group.text)+'</p>'+
+      '<p class="note">これから '+escapeHtml(group.range)+' の5ページを回答します。</p>'+
+      '<p class="note">各ページを最初に見たとき、「このページをさらに見たいと思いますか？」に5段階で回答してください。</p>'+
+      '<button type="button" class="start" id="groupNext">次へ</button>'+
+    '</section>';
+  document.getElementById('groupNext').addEventListener('click',()=>renderPage(g*5));
+}
+
 function loadImage(index){
-  if(state.imageCache.has(index)) return state.imageCache.get(index);
-  const p = new Promise((resolve,reject)=>{
-    const img = new Image();
+  if(state.imageCache.has(index))return state.imageCache.get(index);
+  const p=new Promise((resolve,reject)=>{
+    const img=new Image();
     img.decoding='async';
-    if(index===0) img.fetchPriority='high';
+    if(index===0)img.fetchPriority='high';
     img.onload=()=>resolve(img);
     img.onerror=()=>reject(new Error('画像を読み込めませんでした: '+PAGES[index].file));
     img.src=imageUrl(PAGES[index].file);
@@ -193,18 +187,14 @@ function loadImage(index){
   state.imageCache.set(index,p);
   return p;
 }
-
 function preloadAround(index){
-  [index+1,index+2].filter(i=>i>=0&&i<PAGES.length).forEach(i=>{
-    loadImage(i).catch(()=>{});
-  });
+  [index+1,index+2].filter(i=>i<PAGES.length).forEach(i=>loadImage(i).catch(()=>{}));
 }
 
 async function renderPage(index){
   state.page=index;
-  const group=GROUPS[PAGES[index].group];
   setProgress((index+1)+' / '+PAGES.length);
-  document.getElementById('screen').innerHTML =
+  document.getElementById('screen').innerHTML=
     '<section class="survey-page">'+
       '<div class="visual-wrap">'+
         '<div class="image-loading" id="imageLoading">画像を読み込んでいます…</div>'+
@@ -212,7 +202,7 @@ async function renderPage(index){
       '</div>'+
       '<div class="footer">'+
         '<div class="controls">'+
-          '<div class="question">'+escapeHtml('このページをさらに見たいと思いますか？')+'</div>'+
+          '<div class="question">このページをさらに見たいと思いますか？</div>'+
           '<div class="scale" id="scale">'+
             '<button type="button" class="scale-btn" data-value="1">1：まったく思わない</button>'+
             '<button type="button" class="scale-btn" data-value="2">2：あまり思わない</button>'+
@@ -220,6 +210,7 @@ async function renderPage(index){
             '<button type="button" class="scale-btn" data-value="4">4：やや思う</button>'+
             '<button type="button" class="scale-btn" data-value="5">5：非常に思う</button>'+
           '</div>'+
+          '<button type="button" class="next next-survey" id="pageNext" disabled>次へ</button>'+
         '</div>'+
       '</div>'+
     '</section>';
@@ -227,22 +218,29 @@ async function renderPage(index){
   const imgEl=document.getElementById('stimulus');
   const loading=document.getElementById('imageLoading');
   const buttons=Array.from(document.querySelectorAll('.scale-btn'));
+  const next=document.getElementById('pageNext');
+
   buttons.forEach(btn=>{
-    btn.disabled=true;
     btn.addEventListener('click',()=>{
-      if(btn.disabled) return;
-      const value=btn.dataset.value;
-      state.answers[index]=value;
+      if(btn.disabled)return;
+      state.answers[index]=btn.dataset.value;
       buttons.forEach(b=>b.classList.toggle('selected',b===btn));
-      setTimeout(()=>nextPage(),80);
+      next.disabled=false;
     });
+  });
+  next.addEventListener('click',()=>{
+    if(!state.answers[index])return;
+    if(index===4){renderGroup(1);return}
+    if(index===9){renderGroup(2);return}
+    if(index===14){renderConfirm();return}
+    renderPage(index+1);
   });
 
   try{
     const img=await loadImage(index);
     imgEl.src=img.src;
     imgEl.alt='調査対象ページのファーストビュー';
-    if(img.decode) { try{ await img.decode(); }catch(e){} }
+    if(img.decode){try{await img.decode()}catch(e){}}
     loading.remove();
     buttons.forEach(b=>b.disabled=false);
     preloadAround(index);
@@ -252,20 +250,12 @@ async function renderPage(index){
   }
 }
 
-function nextPage(){
-  if(state.page < PAGES.length-1){
-    renderPage(state.page+1);
-  }else{
-    renderConfirm();
-  }
-}
-
 function renderConfirm(){
   setProgress('15 / 15');
-  document.getElementById('screen').innerHTML =
+  document.getElementById('screen').innerHTML=
     '<section class="card">'+
       '<h2>回答を送信します</h2>'+
-      '<p>15ページすべてに回答しました。送信して終了します。</p>'+
+      '<p>15ページすべてに回答しました。回答内容を確認したら、送信してください。</p>'+
       '<button type="button" class="next" id="submitBtn">回答を送信する</button>'+
       '<p id="submitMessage" class="note"></p>'+
     '</section>';
@@ -273,42 +263,31 @@ function renderConfirm(){
 }
 
 function submit(){
-  if(state.submitting) return;
-  if(!state.grade || state.answers.some(v=>!v)){
-    showError('回答が不足しています。');
-    return;
-  }
+  if(state.submitting)return;
+  if(!state.grade||state.answers.some(v=>!v)){showError('回答が不足しています。');return}
   state.submitting=true;
   const btn=document.getElementById('submitBtn');
   const msg=document.getElementById('submitMessage');
-  btn.disabled=true;
-  btn.textContent='送信中…';
-  msg.textContent='回答を保存しています。';
+  btn.disabled=true;btn.textContent='送信中…';msg.textContent='回答を保存しています。';
 
-  const payload = new URLSearchParams({
-    grade: state.grade,
-    answers: JSON.stringify(state.answers),
-    responseId: state.responseId
+  const payload=new URLSearchParams({
+    grade:state.grade,
+    answers:JSON.stringify(state.answers),
+    responseId:state.responseId
   });
 
-  fetch(GAS_ENDPOINT, {
-    method: 'POST',
-    mode: 'no-cors',
-    body: payload,
-    keepalive: true
+  fetch(GAS_ENDPOINT,{
+    method:'POST',
+    mode:'no-cors',
+    credentials:'include',
+    body:payload,
+    keepalive:true
   }).then(()=>{
-    // no-corsではレスポンス本文を読めないため、送信リクエストが
-    // ブラウザから発行された時点で完了画面へ進める。
     setProgress('');
-    document.getElementById('screen').innerHTML =
-      '<section class="card">'+
-        '<h1>回答ありがとうございました</h1>'+
-        '<p>回答を送信しました。</p>'+
-      '</section>';
+    document.getElementById('screen').innerHTML='<section class="card"><h1>回答ありがとうございました。</h1><p>回答を送信しました。</p></section>';
   }).catch(err=>{
     state.submitting=false;
-    btn.disabled=false;
-    btn.textContent='回答を送信する';
+    btn.disabled=false;btn.textContent='回答を送信する';
     msg.textContent='送信に失敗しました。通信環境を確認して、もう一度お試しください。';
     console.error(err);
   });
